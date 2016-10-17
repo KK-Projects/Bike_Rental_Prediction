@@ -1,0 +1,4 @@
+*.csv
+*.xlsx
+/algoroccans_code.py
+/algoroccans_project_report.pdf
