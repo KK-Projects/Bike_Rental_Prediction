@@ -11,10 +11,46 @@ input_train_sample = pd.read_csv('train.csv')
 output_test_sample = pd.read_csv('test.csv')
 my_sub = pd.read_csv('my_submission.csv')
 
-features = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday',
-            'weathersit', 'temp', 'atemp', 'hum', 'windspeed']
+cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit']
+non_cat_feat = ['temp', 'atemp', 'hum', 'windspeed']
+features = cat_feat + non_cat_feat
 
-input_X = input_train_sample[features]
+_input_X = input_train_sample[features]
+categorical_input_X = _input_X[cat_feat]
+non_cat_input_X = _input_X[non_cat_feat]
+
+
+# Converting Categorical Variables to dummies
+def cat_var_to_dummies(categorical_input_X):
+    """
+    :param categorical_input_X: DataFrame of categorical variables
+    :return:
+    """
+
+    df = pd.DataFrame()
+    for col in categorical_input_X.columns:
+        col_dummies = pd.get_dummies(categorical_input_X[col], prefix=col)
+        df = pd.concat([df, col_dummies], axis=1)
+
+    return df
+
+
+def get_my_input(_input_X, cat_feat, non_cat_feat):
+    """
+
+    :param _input_X:
+    :param cat_feat:
+    :param non_cat_feat:
+    :return:
+    """
+    categorical_input_X = _input_X[cat_feat]
+    non_cat_input_X = _input_X[non_cat_feat]
+    cat_input_X = cat_var_to_dummies(categorical_input_X)
+    input_X = pd.concat([cat_input_X, non_cat_input_X], axis=1)
+    return input_X
+
+
+input_X = get_my_input(_input_X, cat_feat, non_cat_feat)
 input_Y = input_train_sample[['cnt']]
 output_X = output_test_sample[features]
 
@@ -24,12 +60,15 @@ number_sets = 10
 
 def lin_reg_(input_X, input_Y, test_size, number_sets):
 
-    data_subdivised = subdivise_data(input_X, input_Y, test_size, number_sets)
+    input_X_std = pd.DataFrame(StandardScaler().fit_transform(input_X))
+    input_X_std.columns = input_X.columns
+    data_subdivised = subdivise_data(input_X_std, input_Y, test_size, number_sets)
 
     reg = LinearRegression()
 
     for set in data_subdivised.keys():
 
+        print('Fitting the regression for the {} out of {}'.format(set, number_sets))
         X_train = data_subdivised[set]['X_train']
         X_test = data_subdivised[set]['X_test']
         Y_train = data_subdivised[set]['Y_train']
