@@ -6,6 +6,18 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
+def divise_in_classes(input_train_sample, var_Y):
+
+    var_y = var_Y[0]
+    description = input_train_sample[var_y].describe()
+    print(description)
+    bins = [0.0, 0.25, 0.5, 0.75, 1.0]
+    bins_labels = ['first_quartile', 'second_quartile', 'third_quartile', 'fourth_quartile']
+    input_train_sample['category'] = pd.qcut(input_train_sample[var_y], bins, bins_labels)
+
+    return input_train_sample
+
+
 def plot_vars(input_train_sample, feature_1, feature_2):
     """
     From a dataframe input_train_sample it plots 2 variables choses
