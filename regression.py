@@ -6,38 +6,48 @@ from utils import subdivise_data
 from sklearn.preprocessing import StandardScaler
 
 
-def lin_reg_(input_X, input_Y, split_data=True, test_size=0.2, number_sets=10):
+def fitting_reg(data_subdivised, set):
+
+    print('Fitting the regression for the {}'.format(set))
+
+    X_train = data_subdivised[set]['X_train']
+    X_test = data_subdivised[set]['X_test']
+    Y_train = data_subdivised[set]['Y_train']
+    Y_test = data_subdivised[set]['Y_test']
 
     reg = LinearRegression()
+    reg.fit(X_train, Y_train)
+    coefficients = reg.coef_
+    residuals = (reg.predict(X_test) - Y_test)
+    ms_error = np.mean(residuals ** 2)
+    r_squared = reg.score(X_test, Y_test)
+
+    print('Coefficients: \n', coefficients)
+    print('Mean squared error: {}'.format(ms_error))
+    print('Variance score: {}'.format(r_squared))
+
+    return reg, coefficients, residuals, ms_error, r_squared
+
+
+def lin_reg_(input_X, input_Y, test_size=0.2, number_sets=10):
+
     input_X_std = pd.DataFrame(StandardScaler().fit_transform(input_X))
     input_X_std.columns = input_X.columns
 
-    if split_data:
-        data_subdivised = subdivise_data(input_X_std, input_Y, test_size, number_sets)
-    else:
-        data_subdivised = subdivise_data(input_X_std, input_Y, 0, 1)
+    data_subdivised = subdivise_data(input_X_std, input_Y, test_size, number_sets)
 
+    ms_errors = {}
+    var_scores = {}
+    estimated_coefs = {}
     for set in data_subdivised.keys():
 
-        print('Fitting the regression for the {} out of {}'.format(set, number_sets))
-        X_train = data_subdivised[set]['X_train']
-        X_test = data_subdivised[set]['X_test']
-        Y_train = data_subdivised[set]['Y_train']
-        Y_test = data_subdivised[set]['Y_test']
+        reg, coefficients, residuals, ms_error, r_squared = fitting_reg(data_subdivised, set)
 
-        reg.fit(X_train, Y_train)
+        estimated_coefs[set] = coefficients
+        ms_errors[set] = ms_error[0]
+        var_scores[set] = r_squared
 
-        coefficients = reg.coef_
-        print('Coefficients: \n', coefficients)
+    optimal_set = min(ms_errors, key=ms_errors.get)
+    reg, coefficients, residuals, ms_error, r_squared = fitting_reg(data_subdivised, optimal_set)
 
-        if split_data:
-            ms_error = np.mean((reg.predict(X_test) - Y_test) ** 2)
-            print('Mean squared error: {}'.format(ms_error))
-            # Explained variance score: 1 is perfect prediction
-            r_squared = reg.score(X_test, Y_test)
-            print('Variance score: {}'.format(r_squared))
-        else:
-            # Plot outputs
-            # plt.scatter(Y_test, reg.predict(X_test),  color='black')
-            # plt.show()
-            return reg
+    return reg, residuals
