@@ -1,25 +1,6 @@
 
 import pandas as pd
 from sklearn.cross_validation import train_test_split
-import matplotlib.pyplot as plt
-
-
-def plot_vars(input_train_sample, feature_1, feature_2):
-    """
-    From a dataframe input_train_sample it plots 2 variables choses
-    :param input_train_sample: Dataframe
-    :param feature_1: String - Name of the feature 1 to plot as x
-    :param feature_2: String - Name of the feature 2 to plot as y
-    :return: plot
-    """
-    xlabel = feature_1
-    ylabel = feature_2
-    x = input_train_sample[xlabel]
-    y = input_train_sample[ylabel]
-    plt.plot(x, y, 'o')
-    plt.ylabel(ylabel)
-    plt.xlabel(xlabel)
-    plt.show()
 
 
 def df_train_test_split(data_X, data_Y, test_size):
@@ -73,3 +54,30 @@ def subdivise_data(data_X, data_Y, test_size, number_sets):
     return dict_train
 
 
+def cat_var_to_dummies(categorical_input_X):
+    """
+    :param categorical_input_X: DataFrame of categorical variables
+    :return:
+    """
+
+    df = pd.DataFrame()
+    for col in categorical_input_X.columns:
+        col_dummies = pd.get_dummies(categorical_input_X[col], prefix=col)
+        df = pd.concat([df, col_dummies], axis=1)
+
+    return df
+
+
+def get_my_input(_input_X, cat_feat, non_cat_feat):
+    """
+
+    :param _input_X:
+    :param cat_feat:
+    :param non_cat_feat:
+    :return:
+    """
+    categorical_input_X = _input_X[cat_feat]
+    non_cat_input_X = _input_X[non_cat_feat]
+    cat_input_X = cat_var_to_dummies(categorical_input_X)
+    input_X = pd.concat([cat_input_X, non_cat_input_X], axis=1)
+    return input_X
