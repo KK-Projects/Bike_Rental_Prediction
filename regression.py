@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 
 from sklearn.linear_model import LinearRegression
-from utils import subdivise_data
 from sklearn.preprocessing import StandardScaler
+
+from utils import subdivise_data
 
 
 def fitting_reg(data_subdivised, set):
