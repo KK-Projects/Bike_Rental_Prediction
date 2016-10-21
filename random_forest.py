@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import classification_report, roc_auc_score, roc_curve, mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
 
 from utils import subdivise_data
 
@@ -21,13 +20,12 @@ def fitting_forest(data_subdivised, set, n_estimators=100):
     fit_forest = forest.fit(X_train, Y_train)
     residuals = (forest.predict(X_test) - Y_test)
     ms_error = np.mean(residuals ** 2)
-
     print('Mean squared error: {}'.format(ms_error))
 
     return fit_forest, residuals, ms_error
 
 
-def lin_reg_(input_X, input_Y, test_size=0.2, number_sets=10):
+def rand_forest_reg(input_X, input_Y, test_size=0.2, number_sets=10):
 
     input_X_std = pd.DataFrame(StandardScaler().fit_transform(input_X))
     input_X_std.columns = input_X.columns
