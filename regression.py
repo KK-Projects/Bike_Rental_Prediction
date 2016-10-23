@@ -20,6 +20,7 @@ def fitting_reg(data_subdivised, set):
     reg.fit(X_train, Y_train)
     coefficients = reg.coef_
     residuals = (reg.predict(X_test) - Y_test)
+    residuals.columns = ['residuals']
     ms_error = np.mean(residuals ** 2)
     r_squared = reg.score(X_test, Y_test)
 
@@ -51,4 +52,4 @@ def lin_reg_(input_X, input_Y, test_size=0.2, number_sets=10):
     optimal_set = min(ms_errors, key=ms_errors.get)
     reg, coefficients, residuals, ms_error, r_squared = fitting_reg(data_subdivised, optimal_set)
 
-    return reg, residuals
+    return reg, residuals, data_subdivised[optimal_set]
