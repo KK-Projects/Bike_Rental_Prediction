@@ -20,7 +20,6 @@ def fitting_svm(data_subdivised, set):
 
     classification = svm.SVC()
     classification.fit(X_train, np.transpose(Y_train)[0])
-    classification.predict(X_test)
 
     y_pred = classification.predict(X_test)
     y_true = np.transpose(Y_test)[0]
