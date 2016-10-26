@@ -21,12 +21,6 @@ def fitting_svm(data_subdivised, set):
     classification = svm.SVC()
     classification.fit(X_train, np.transpose(Y_train)[0])
     classification.predict(X_test)
-    # get support vectors
-    classification.support_vectors_
-    # get indices of support vectors
-    classification.support_
-    # get number of support vectors for each class
-    classification.n_support_
 
     y_pred = classification.predict(X_test)
     y_true = np.transpose(Y_test)[0]
