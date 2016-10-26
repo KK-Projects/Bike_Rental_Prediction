@@ -42,7 +42,6 @@ def svc(categorical_input_X , class_input_Y, test_size=0.2, number_sets=10):
     for set in data_subdivised.keys():
 
         classification, conf_matrix, error_rate = fitting_svm(data_subdivised, set)
-
         error_rates[set] = error_rate
 
     optimal_set = min(error_rates, key=error_rates.get)
