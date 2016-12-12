@@ -85,7 +85,7 @@ def get_my_input(_input_X, cat_feat, non_cat_feat):
     return input_X
 
 
-def cross_validate(_input_X, _input_Y, classifier, nb_folds):
+def cross_validate(_input_X, _input_Y, classifier, nb_folds=10):
     """ Perform a cross-validation and returns the predictions.
         Use a scaler to scale the features to mean 0, standard deviation 1.
 
@@ -111,6 +111,7 @@ def cross_validate(_input_X, _input_Y, classifier, nb_folds):
         Xtr = np.array(_input_X)[tr, :]
         ytr = np.array(_input_Y)[tr]
         Xte = np.array(_input_X)[te, :]
+        yte = np.array(_input_Y)[te]
 
         # Scale data
         scaler = preprocessing.StandardScaler()  # create scaler
@@ -121,6 +122,6 @@ def cross_validate(_input_X, _input_Y, classifier, nb_folds):
         classifier.fit(Xtr, ytr)
 
         # Predictions
-        pred[te] = classifier.predict(Xte)
+        pred[te] = classifier.predict(Xte).reshape(yte.size,1)
     return pred
 
