@@ -1,6 +1,8 @@
-
+import numpy as np
 import pandas as pd
 from sklearn.cross_validation import train_test_split
+from sklearn import preprocessing
+from sklearn.cross_validation import StratifiedKFold
 
 
 def df_train_test_split(data_X, data_Y, test_size):
@@ -81,3 +83,44 @@ def get_my_input(_input_X, cat_feat, non_cat_feat):
     cat_input_X = cat_var_to_dummies(categorical_input_X)
     input_X = pd.concat([cat_input_X, non_cat_input_X], axis=1)
     return input_X
+
+
+def cross_validate(_input_X, _input_Y, classifier, nb_folds):
+    """ Perform a cross-validation and returns the predictions.
+        Use a scaler to scale the features to mean 0, standard deviation 1.
+
+        Parameters:
+        -----------
+        _input_X: (n_samples, n_features) np.array
+        _input_Y: (n_samples, ) np.array
+        classifier:  sklearn classifier object
+            Classifier instance; must have the following methods:
+            - fit(X, y) to train the classifier on the data X, y
+            - predict(X) to apply the trained classifier to the data X and return probability estimates
+        nb_folds: snumber of folds for the cross validation
+
+        Return:
+        -------
+        pred: (n_samples, ) np.array
+            Vectors of predictions
+        """
+    cv_folds = StratifiedKFold(np.array(_input_Y).reshape(_input_Y.shape[0]), nb_folds, shuffle=True)
+    pred = np.zeros(_input_Y.shape)  # vector of 0 in which to store the predictions
+    for tr, te in cv_folds:
+        # Restrict data to train/test folds
+        Xtr = np.array(_input_X)[tr, :]
+        ytr = np.array(_input_Y)[tr]
+        Xte = np.array(_input_X)[te, :]
+
+        # Scale data
+        scaler = preprocessing.StandardScaler()  # create scaler
+        Xtr = scaler.fit_transform(Xtr)  # fit the scaler to the training data and transform training data
+        Xte = scaler.transform(Xte)  # transform test data
+
+        # Fit classifier
+        classifier.fit(Xtr, ytr)
+
+        # Predictions
+        pred[te] = classifier.predict(Xte)
+    return pred
+
