@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils import get_my_input
+from utils import get_my_input, cat_var_to_dummies
 from regression import lin_reg_
 from features_description import plot_vars, divise_in_classes
 from random_forest import rand_forest_reg
@@ -25,6 +25,7 @@ _categorical_input_X = _input_X[cat_feat]
 non_cat_input_X = _input_X[non_cat_feat]
 
 input_X = get_my_input(_input_X, cat_feat, non_cat_feat)
+categorical_input_X = cat_var_to_dummies(_categorical_input_X)
 input_Y = input_train_sample[var_Y]
 output_X = output_test_sample[features]
 
