@@ -85,7 +85,34 @@ def get_my_input(_input_X, cat_feat, non_cat_feat):
     return input_X
 
 
-def cross_validate(_input_X, _input_Y, classifier, nb_folds=10):
+def scale_non_cat_feat(input_train, input_test, non_cat_feat):
+    """
+
+    :param _input_X:
+    :param cat_feat:
+    :param non_cat_feat:
+    :return:
+    """
+    scaler = preprocessing.StandardScaler()
+    cat_feat = input_train.columns.drop(non_cat_feat)
+    categorical_input_train = input_train[cat_feat]
+    non_cat_input_train = input_train[non_cat_feat]
+    cat_input_train = pd.DataFrame(scaler.fit_transform(categorical_input_train))
+    cat_input_train.columns = cat_feat
+
+    _input_train = pd.concat([cat_input_train, non_cat_input_train], axis=1)
+
+    categorical_input_test = input_test[cat_feat]
+    non_cat_input_test = input_test[non_cat_feat]
+    cat_input_test= pd.DataFrame(scaler.transform(categorical_input_test))
+    cat_input_test.columns = cat_feat
+
+    _input_test= pd.concat([cat_input_test, non_cat_input_test], axis=1)
+
+    return _input_train, _input_test
+
+
+def cross_validate(_input_X, _input_Y, classifier, nb_folds=10, non_cat_feat=['temp', 'atemp', 'hum', 'windspeed']):
     """ Perform a cross-validation and returns the predictions.
         Use a scaler to scale the features to mean 0, standard deviation 1.
 
