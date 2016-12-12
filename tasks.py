@@ -25,7 +25,6 @@ _categorical_input_X = _input_X[cat_feat]
 non_cat_input_X = _input_X[non_cat_feat]
 
 input_X = get_my_input(_input_X, cat_feat, non_cat_feat)
-categorical_input_X = get_my_input(_categorical_input_X, cat_feat, non_cat_feat)
 input_Y = input_train_sample[var_Y]
 output_X = output_test_sample[features]
 
