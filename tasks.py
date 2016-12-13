@@ -239,6 +239,36 @@ knn_res_output = pd.concat([input_Y, knn_min_residuals], axis=1)
 knn_res_output.columns = [var_Y[0], 'residuals']
 plot_vars(knn_res_output, var_Y[0], 'residuals')
 
+# K Nearest Neighbors
+
+nb_folds = 5
+knn_ms_errors = []
+knn_residuals = []
+knn_algorithm = ["auto"]  # ["ball_tree", "kd_tree", "brute", "auto"]
+knn_weights = ["uniform"]  # ["uniform", "distance"]
+knn_neighbors = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]
+# [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]
+for algorithm in knn_algorithm:
+    for weight in knn_weights:
+        for neigh in knn_neighbors:
+            print("Estimating KNN with algorithm = {}, weight = {}, neighbors = {}".format(algorithm, weight, neigh))
+            predictions, residuals, ms_error = k_nearest_neighbors(input_X, input_Y, nb_folds=nb_folds,
+                                                                   n_neighbors=neigh, weights=weight,
+                                                                   algo=algorithm)
+            knn_ms_errors.append(ms_error)
+            knn_residuals.append(residuals)
+            print('ms_error of fitting:{}'.format(ms_error))
+
+print('Min of ms_errors: {}'.format(np.min(knn_ms_errors)))
+knn_min_index = np.argmin(knn_ms_errors)
+knn_min_residuals = knn_residuals[knn_min_index]
+
+knn_min_ms_error = knn_ms_errors[knn_min_index]
+
+knn_res_output = pd.concat([input_Y, knn_min_residuals], axis=1)
+knn_res_output.columns = [var_Y[0], 'residuals']
+plot_vars(knn_res_output, var_Y[0], 'residuals')
+
 
 # Classification(input_train_sample, var_Y, categorical_input_X):
 input_train_div = divise_in_classes(input_train_sample, var_Y)
