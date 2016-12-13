@@ -5,6 +5,7 @@ from utils import get_my_input, cat_var_to_dummies, cross_validate
 #from regression import lin_reg_
 from features_description import plot_vars, divise_in_classes
 from random_forest import rand_forest_reg
+from knearest import k_nearest_neighbors
 from sklearn.ensemble import RandomForestRegressor
 from svm import svc, svr
 import matplotlib.pyplot as plt
@@ -224,6 +225,30 @@ optimal_n_estim = rf_ms_errors[min_index]
 res_output = pd.concat([input_Y, min_residuals], axis=1)
 res_output.columns = [var_Y[0], 'residuals']
 plot_vars(res_output, var_Y[0], 'residuals')
+
+# K Nearest Neighbors
+
+nb_folds = 5
+knn_ms_errors = []
+knn_residuals = []
+knn_neighbors = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]
+for neigh in knn_neighbors:
+    print("Estimating KNN cross validation with knn_neighbors = {}".format(neigh))
+    predictions, residuals, ms_error = k_nearest_neighbors(input_X, input_Y, nb_folds=nb_folds, n_neighbors=neigh)
+    knn_ms_errors.append(ms_error)
+    knn_residuals.append(residuals)
+    print('ms_error of fitting:{}'.format(ms_error))
+
+print('Min of ms_errors: {}'.format(np.min(knn_ms_errors)))
+knn_min_index = np.argmin(knn_ms_errors)
+knn_min_residuals = knn_residuals[knn_min_index]
+
+knn_min_ms_error = knn_ms_errors[knn_min_index]
+
+knn_res_output = pd.concat([input_Y, knn_min_residuals], axis=1)
+knn_res_output.columns = [var_Y[0], 'residuals']
+plot_vars(knn_res_output, var_Y[0], 'residuals')
+
 
 
 # Classification(input_train_sample, var_Y, categorical_input_X):
