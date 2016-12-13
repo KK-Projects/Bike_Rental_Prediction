@@ -12,20 +12,10 @@ from datetime import datetime
 
 from pylab import savefig
 
-
-#### idée 1 : RF ou SVM sur 4 classes (4 quartiles) puis faire une regression sur chaque classe
-#### idée 2 : SVR, random forest for regression
-#### Comparer avec les residus a chaque fois
-#### Scale les feature continues
-
 pd.set_option('display.width', 250)
 
 
 input_train_sample = pd.read_csv('train.csv')
-
-hour_filter=False
-if hour_filter:
-    input_train_sample = input_train_sample[input_train_sample.hr <= 5]
 
 output_test_sample = pd.read_csv('test.csv')
 my_sub = pd.read_csv('my_submission.csv')
@@ -83,19 +73,12 @@ for x_feat in features_uniques.keys():
 
     data_plot = input_train_sample.groupby([x_feat])[y_feat].agg(aggregations_)
 
-    #fig = FF.create_candlestick(data_plot.mean, data_plot.amin, data_plot.amax,
-    #                            data_plot.percentile_25, data_plot.percentile_75,
-    #                            dates=data_plot.index)
-    #py.iplot(fig, validate=False)
-
     fig, ax1 = plt.subplots()
     box = ax1.get_position()
     ax1.set_position([box.x0, box.y0, box.width * 0.9, box.height])
 
     ax1.plot(data_plot.index.tolist(), data_plot['mean'], 'bo', label='mean')
     ax1.plot(data_plot.index.tolist(), data_plot['median'], 'b-', label='median')
-    #ax1.plot(data_plot.index.tolist(), data_plot['amin'], 'r-', label='amin')
-    #ax1.plot(data_plot.index.tolist(), data_plot['amax'], 'r-', label='amax')
     ax1.plot(data_plot.index.tolist(), data_plot['percentile_25'], 'g-', label='percentile_25')
     ax1.plot(data_plot.index.tolist(), data_plot['percentile_75'], 'g-', label='percentile_75')
     plt.legend(loc="upper center", bbox_to_anchor=[0.5, 1.12],
@@ -117,23 +100,6 @@ for x_feat in features_uniques.keys():
     plt.show()
     savefig('cnt descriptions according to the {}.png'.format(x_feat))
 
-
-# Divide in subtables
-# # season
-
-inputs_X = []
-inputs_Y = []
-for i in input_train_sample.season.unique():
-
-    _input_ = input_train_sample[input_train_sample.season == i ]
-    _input_X = _input_[features]
-    input_X_ = get_my_input(_input_X, cat_feat, non_cat_feat)
-
-    input_Y_ = _input_[var_Y]
-
-    inputs_X.append(input_X_)
-    inputs_Y.append(input_Y_)
-
 # SVR
 # # linear: \langle x, x'\rangle.
 # # poly: (\gamma \langle x, x'\rangle + r)^d. d is specified by keyword degree, r by coef0.
@@ -145,6 +111,7 @@ season_predictions = {}
 season_kernels = {}
 season_C = {}
 
+# Loop on the seasons
 for i in range(4):
     svr_predictions = {}
     svr_ms_errors = {}
@@ -152,11 +119,13 @@ for i in range(4):
     changing_C = [0.1, 0.5]# 1, 2, 2.5, 5, 10, 20, 50]
     kernels = ['rbf', 'linear']#, 'poly', 'sigmoid']
 
+    # Loop to optimize the Kernels
     for ker in kernels:
         svr_ms_errors[ker] = {}
         svr_residuals[ker] = {}
         svr_predictions[ker] = {}
         print("Estimating SVR cross validation with Kernel:{}".format(ker))
+        # Loop to optimize the C factor
         for c in changing_C:
             print("Estimating SVR cross validation with C = {}".format(c))
             predictions, residuals, ms_error = svr(inputs_X[i], inputs_Y[i],
@@ -203,27 +172,41 @@ optimal_mse = np.mean(optimal_res**2)
 # plot_vars(res_output, var_Y[0], 'residuals')
 
 
-# Random_Forest
+# Random_Forest 3 Params to cross validate
 
+rf_predictions = []
 rf_ms_errors = []
 rf_residuals = []
-n_estimators = [20, 50, 100, 200, 250, 500, 1000, 1500]
-for estim in n_estimators:
-    print("Estimating random forest cross validation with n_estimators = {}".format(estim))
-    predictions, residuals, ms_error = rand_forest_reg(input_X, input_Y, nb_folds=nb_folds, n_estimators=estim)
-    rf_ms_errors.append(ms_error)
-    rf_residuals.append(residuals)
-    print('ms_error of fitting:{}'.format(ms_error))
+max_depths = [None, 300, 500, 800, 1000, 1200]
+max_feats = ["auto"]# "sqrt", "log2"]
+n_estimators = [200, 300, 400, 500, 750, 850, 950, 1050, 1200, 1500]
+for depth in max_depths:
+    for max_f in max_feats:
+        for estim in n_estimators:
+            print("Estimating random forest cross validation with "
+                  "{} trees, {} as max_depth, {} max_feats".format(estim, depth, max_f))
+            predictions, residuals, ms_error = rand_forest_reg(input_X, input_Y,
+                                                               max_features=max_f, nb_folds=nb_folds,
+                                                               max_depth=depth, n_estimators=estim)
+            rf_ms_errors.append(ms_error)
+            rf_residuals.append(residuals)
+            print('ms_error of fitting:{}'.format(ms_error))
+            rf_predictions.append(predictions)
 
 print('Min of ms_errors: {}'.format(np.min(rf_ms_errors)))
 min_index = np.argmin(rf_ms_errors)
 min_residuals = rf_residuals[min_index]
 
-optimal_n_estim = rf_ms_errors[min_index]
+rf_optimal_mse = rf_ms_errors[min_index]
+optimal_preds = np.array(rf_predictions[min_index])
 
-res_output = pd.concat([input_Y, min_residuals], axis=1)
-res_output.columns = [var_Y[0], 'residuals']
-plot_vars(res_output, var_Y[0], 'residuals')
+optimal_res = optimal_preds - input_Y
+optimal_mse = np.mean(optimal_res**2)
+print('final mse for optimal n_estimators for each season = {}'.format(optimal_mse))
+
+# res_output = pd.concat([input_Y, min_residuals], axis=1)
+# res_output.columns = [var_Y[0], 'residuals']
+# plot_vars(res_output, var_Y[0], 'residuals')
 
 
 # Classification(input_train_sample, var_Y, categorical_input_X):
@@ -239,3 +222,24 @@ reg, residuals, input_data = lin_reg_(input_X, input_Y, test_size=0.2, number_se
 res_output = pd.concat([input_data['Y_test'], residuals], axis=1)
 res_output.columns = [var_Y[0], 'residuals']
 plot_vars(res_output, var_Y[0], 'residuals')
+
+
+# Get Output Data for Kaggle
+
+optimal_n_estimators = 1700
+forest = RandomForestRegressor(n_estimators=optimal_n_estimators, max_features="auto")
+
+from sklearn import preprocessing
+scaler = preprocessing.StandardScaler()
+xtr = scaler.fit_transform(input_X)
+_output_X = get_my_input(output_X, cat_feat, non_cat_feat)
+xte = scaler.transform(_output_X)  # transform test data
+# Fit classifier
+forest.fit(xtr, input_Y)
+# Predictions
+
+pred = forest.predict(xte)
+my_sub = pd.read_csv('my_submission.csv')
+my_sub['Prediction'] = pred
+my_sub.Prediction = my_sub.Prediction.astype(int)
+my_sub.to_csv('sub_2.csv', index=False)
