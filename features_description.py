@@ -10,7 +10,7 @@ def divise_in_classes(input_train_sample, var_Y):
 
     var_y = var_Y[0]
     description = input_train_sample[var_y].describe()
-    print(description)
+    print("Description of output data: {}".format(description))
     bins = [0.0, 0.25, 0.5, 0.75, 1.0]
     bins_labels = [1, 2, 3, 4]
     input_train_sample['category'] = pd.qcut(input_train_sample[var_y], bins, bins_labels)

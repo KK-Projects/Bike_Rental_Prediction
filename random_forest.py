@@ -16,4 +16,4 @@ def rand_forest_reg(input_X, input_Y, nb_folds=10, n_estimators=100):
     residuals = pd.DataFrame(residuals)
     residuals.columns = ['residuals']
 
-    return forest, residuals, ms_error
+    return predictions, residuals, ms_error
