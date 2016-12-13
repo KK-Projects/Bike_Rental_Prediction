@@ -6,9 +6,9 @@ from sklearn import neighbors
 from utils import cross_validate
 
 
-def k_nearest_neighbors(input_X, input_Y, nb_folds=10, n_neighbors=15):
+def k_nearest_neighbors(input_X, input_Y, nb_folds=10, n_neighbors=15, weights="uniform", algo="auto"):
 
-    k_nearest = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
+    k_nearest = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights, algorithm=algo)
     predictions = cross_validate(input_X, input_Y, k_nearest, nb_folds=nb_folds)
     residuals = predictions - input_Y
     ms_error = np.mean(residuals ** 2)
