@@ -17,17 +17,26 @@ pd.set_option('display.width', 250)
 
 
 input_train_sample = pd.read_csv('train.csv')
-input_train_sample["trimestre"] = input_train_sample.yr * 4 + input_train_sample.season
+#input_train_sample["trimestre"] = input_train_sample.yr * 4 + input_train_sample.season
 
 output_test_sample = pd.read_csv('test.csv')
-output_test_sample["trimestre"] = output_test_sample.yr * 4 + output_test_sample.season
+#output_test_sample["trimestre"] = output_test_sample.yr * 4 + output_test_sample.season
 my_sub = pd.read_csv('my_submission.csv')
 
-cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit', 'yr', 'trimestre']
+cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit', 'yr']#, 'trimestre']
 non_cat_feat = ['temp', 'atemp', 'hum', 'windspeed']
 var_Y = ['cnt']
 features = cat_feat + non_cat_feat
 
+import matplotlib.pyplot as plt
+feat_ = 'windspeed'
+plt.plot(input_train_sample[feat_], input_train_sample.cnt, 'go')
+plt.axis([0, input_train_sample[feat_].max() + 0.1, 0, input_train_sample.cnt.max() + 0.1])
+plt.title("Number of bikes rented")
+plt.xlabel(feat_)
+plt.ylabel('cnt')
+plt.show()
+savefig('Number of bikes rented to the {}.png'.format(feat_))
 
 _input_X = input_train_sample[features]
 _categorical_input_X = _input_X[cat_feat]
@@ -41,6 +50,7 @@ output_X = output_test_sample[features]
 
 # Describing y training variable
 input_Y.describe()
+
 features_uniques = {}
 for feat in cat_feat:
     features_uniques[feat] = _input_X[feat].unique().tolist()
@@ -107,7 +117,7 @@ for x_feat in features_uniques.keys():
 # # poly: (\gamma \langle x, x'\rangle + r)^d. d is specified by keyword degree, r by coef0.
 # # rbf: \exp(-\gamma |x-x'|^2). \gamma is specified by keyword gamma, must be greater than 0.
 # # sigmoid (\tanh(\gamma \langle x,x'\rangle + r)), where r is specified by coef0.
-nb_folds = 10
+nb_folds = 5
 
 # Random_Forest 3 Params to cross validate
 
@@ -117,7 +127,8 @@ bucks['mnth'] = [0, 3, 6, 12]
 #bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
 #bucks['hum'] = [-1., 0.2, 0.8, 1]
 bucks['atemp'] = [-1., 0.17, 0.3, 0.58, 0.61, 0.71, 1]
-bucks['hum'] = [-1., 0.15, 0.46, 0.58, 0.66, 0.74, 0.84, 0.91, 1]
+bucks['hum'] = [-1., 0.2, 0.46, 0.58, 0.66, 0.74, 0.84, 0.91, 1]
+bucks['windspeed'] = [-1., 0.3, 0.5, 1]
 
 _input_X = input_train_sample[features]
 _categorical_input_X = _input_X[cat_feat]
@@ -130,9 +141,10 @@ input_Y = input_train_sample[var_Y]
 rf_predictions = []
 rf_ms_errors = []
 rf_residuals = []
-max_depths = [None, 300, 500, 800, 900, 1000, 1200, 1500, 2000, 5000]
-max_feats = ["auto"]# "sqrt", "log2"]
-n_estimators = [50]#, 300, 400, 500, 750, 850, 950, 1050, 1200, 1500]
+rf_log_mse = []
+max_depths = [None, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+max_feats = [None, "sqrt"]#, "log2"]
+n_estimators = [1, 5, 10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500, 750, 950, 1050]
 for depth in max_depths:
     for max_f in max_feats:
         for estim in n_estimators:
@@ -146,6 +158,11 @@ for depth in max_depths:
             print('ms_error of fitting:{}'.format(ms_error))
             rf_predictions.append(predictions)
 
+            _log_res = np.log(predictions + 1) - np.log(input_Y + 1)
+            log_mse = np.sqrt(np.mean(_log_res ** 2))
+            rf_log_mse.append(log_mse)
+            print('final RMSLE for optimal n_estimators for each season = {}'.format(log_mse))
+
 print('Min of ms_errors: {}'.format(np.min(rf_ms_errors)))
 min_index = np.argmin(rf_ms_errors)
 min_residuals = rf_residuals[min_index]
@@ -153,9 +170,34 @@ min_residuals = rf_residuals[min_index]
 rf_optimal_mse = rf_ms_errors[min_index]
 optimal_preds = np.array(rf_predictions[min_index])
 
-optimal_res = optimal_preds - input_Y
-optimal_mse = np.mean(optimal_res**2)
-print('final mse for optimal n_estimators for each season = {}'.format(optimal_mse))
+log_optimal_res = np.log(optimal_preds + 1) - np.log(input_Y + 1)
+optimal_mse = np.sqrt(np.mean(log_optimal_res**2))
+print('final RMSLE for optimal n_estimators for each season = {}'.format(optimal_mse))
+
+import matplotlib.pyplot as plt
+plt.plot(n_estimators, rf_log_mse_, 'b-')
+plt.title("Cross-validated score(RMSLE) for different values of Number of Trees")
+plt.xlabel('number of trees')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of Number of Trees.png')
+
+plt.plot(max_feats, rf_log_mse, 'b-')
+plt.title("Cross-validated score(RMSLE) for different max features functions")
+plt.xlabel('number of trees')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of Number of Trees.png')
+
+
+plt.plot(n_estimators, rf_log_mse, 'b-')
+plt.axis([0, 6, 0, 800])
+plt.title("Cross-validated score(RMSLE) for different values of max depth")
+plt.xlabel('number of trees')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of max depth.png')
+
 
 # res_output = pd.concat([input_Y, min_residuals], axis=1)
 # res_output.columns = [var_Y[0], 'residuals']
@@ -239,12 +281,6 @@ plot_vars(res_output, var_Y[0], 'residuals')
 
 # Get Output Data for Kaggle
 
-optimal_n_estimators = 900
-forest = RandomForestRegressor(n_estimators=optimal_n_estimators, max_depth=None, max_features="sqrt")
-
-from sklearn import preprocessing
-scaler = preprocessing.StandardScaler()
-
 from sklearn import tree
 clf = tree.DecisionTreeClassifier()
 import pydotplus
@@ -261,11 +297,21 @@ dot_data = tree.export_graphviz(clf, out_file=None,
 graph = pydotplus.graph_from_dot_data(dot_data)
 img = Image(graph.create_png())
 
-bucks = {}
-bucks['hr'] = [-1, 6, 9, 12, 16, 18, 20, 24]
-bucks['mnth'] = [0, 6, 12]
-bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
-bucks['hum'] = [-1., 0.2, 0.8, 1]
+optimal_n_estimators = 900
+forest = RandomForestRegressor(n_estimators=optimal_n_estimators, max_depth=None, max_features="auto")
+from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV
+linear = LinearRegression()
+ridge = RidgeCV(alphas=[1e-2, 0.1, 1.0, 10.0, 100.0])
+from sklearn import svm
+_svr = svm.SVR(C=1, kernel='rbf', degree=3, gamma=0.001)
+from sklearn import neighbors
+knn = neighbors.KNeighborsClassifier(n_neighbors=15, weights="uniform", algorithm="auto")
+
+
+classifier = knn
+from sklearn import preprocessing
+scaler = preprocessing.StandardScaler()
+
 _input_X = input_train_sample[features]
 _categorical_input_X = _input_X[cat_feat]
 non_cat_input_X = _input_X[non_cat_feat]
@@ -275,11 +321,11 @@ xtr = scaler.fit_transform(input_X)
 _output_X = get_my_input(output_X, cat_feat, non_cat_feat, bucks=bucks, buckets=True, drop_feat=False)
 xte = scaler.transform(_output_X)  # transform test data
 # Fit classifier
-forest.fit(xtr, input_Y)
+classifier.fit(xtr, input_Y)
 # Predictions
 
-pred = forest.predict(xte)
+pred = classifier.predict(xte)
 my_sub = pd.read_csv('my_submission.csv')
 my_sub['Prediction'] = pred
 my_sub.Prediction = my_sub.Prediction.astype(int)
-my_sub.to_csv('sub_3.csv', index=False)
+my_sub.to_csv('sub_{}.csv'.format(classifier), index=False)

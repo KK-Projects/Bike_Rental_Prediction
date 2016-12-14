@@ -24,7 +24,7 @@ def svc(categorical_input_X, class_input_Y, nb_folds= 10, C=1.0, kernel='rbf', d
 
 def svr(input_X, input_Y, nb_folds=10, C=1.0, kernel='rbf', degree=3, gamma='auto'):
 
-    classification = svm.SVC(C=C, kernel=kernel, degree=degree, gamma=gamma)
+    classification = svm.SVR(C=C, kernel=kernel, degree=degree, gamma=gamma)
 
     predictions = cross_validate(input_X, input_Y, classification, nb_folds=nb_folds)
 
