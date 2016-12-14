@@ -31,7 +31,7 @@ _input_X = input_train_sample[features]
 _categorical_input_X = _input_X[cat_feat]
 non_cat_input_X = _input_X[non_cat_feat]
 
-input_X = get_my_input(_input_X, cat_feat, non_cat_feat)
+input_X = get_my_input(_input_X, cat_feat, non_cat_feat, buckets=False)
 categorical_input_X = cat_var_to_dummies(_categorical_input_X)
 input_Y = input_train_sample[var_Y]
 
@@ -77,7 +77,6 @@ for x_feat in features_uniques.keys():
     fig, ax1 = plt.subplots()
     box = ax1.get_position()
     ax1.set_position([box.x0, box.y0, box.width * 0.9, box.height])
-
     ax1.plot(data_plot.index.tolist(), data_plot['mean'], 'bo', label='mean')
     ax1.plot(data_plot.index.tolist(), data_plot['median'], 'b-', label='median')
     ax1.plot(data_plot.index.tolist(), data_plot['percentile_25'], 'g-', label='percentile_25')
@@ -106,16 +105,34 @@ for x_feat in features_uniques.keys():
 # # poly: (\gamma \langle x, x'\rangle + r)^d. d is specified by keyword degree, r by coef0.
 # # rbf: \exp(-\gamma |x-x'|^2). \gamma is specified by keyword gamma, must be greater than 0.
 # # sigmoid (\tanh(\gamma \langle x,x'\rangle + r)), where r is specified by coef0.
-nb_folds = 5
+nb_folds = 10
 
 # Random_Forest 3 Params to cross validate
+
+cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit']
+non_cat_feat = ['temp', 'atemp', 'hum', 'windspeed']
+var_Y = ['cnt']
+features = cat_feat + non_cat_feat
+
+bucks = {}
+bucks['hr'] = [-1, 6, 9, 12, 16, 18, 20, 24]
+bucks['mnth'] = [0, 6, 12]
+bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
+bucks['hum'] = [-1., 0.2, 0.8, 1]
+_input_X = input_train_sample[features]
+_categorical_input_X = _input_X[cat_feat]
+non_cat_input_X = _input_X[non_cat_feat]
+
+input_X = get_my_input(_input_X, cat_feat, non_cat_feat, bucks=bucks, buckets=True, drop_feat=False)
+categorical_input_X = cat_var_to_dummies(_categorical_input_X)
+input_Y = input_train_sample[var_Y]
 
 rf_predictions = []
 rf_ms_errors = []
 rf_residuals = []
-max_depths = [None, 300, 500, 800, 1000, 1200]
+max_depths = [None, 300, 500, 800, 900, 1000, 1200, 1500, 2000, 5000]
 max_feats = ["auto"]# "sqrt", "log2"]
-n_estimators = [200, 300, 400, 500, 750, 850, 950, 1050, 1200, 1500]
+n_estimators = [50]#, 300, 400, 500, 750, 850, 950, 1050, 1200, 1500]
 for depth in max_depths:
     for max_f in max_feats:
         for estim in n_estimators:
@@ -146,7 +163,7 @@ print('final mse for optimal n_estimators for each season = {}'.format(optimal_m
 
 # K Nearest Neighbors
 
-nb_folds = 5
+nb_folds = 10
 knn_ms_errors = []
 knn_residuals = []
 knn_algorithm = ["auto"]  # ["ball_tree", "kd_tree", "brute", "auto"]
@@ -222,13 +239,40 @@ plot_vars(res_output, var_Y[0], 'residuals')
 
 # Get Output Data for Kaggle
 
-optimal_n_estimators = 1700
-forest = RandomForestRegressor(n_estimators=optimal_n_estimators, max_features="auto")
+optimal_n_estimators = 900
+forest = RandomForestRegressor(n_estimators=optimal_n_estimators, max_depth=None, max_features="sqrt")
 
 from sklearn import preprocessing
 scaler = preprocessing.StandardScaler()
+
+from sklearn import tree
+clf = tree.DecisionTreeClassifier()
+import pydotplus
+from IPython.display import Image, display
+from sklearn.datasets import load_iris
+iris = load_iris()
+data = input_train_sample[['temp']+['cnt']]
+_data = np.array([data['temp']]).transpose()
+target = np.array(data['cnt'])
+clf = clf.fit(_data, target)
+dot_data = tree.export_graphviz(clf, out_file=None,
+                                filled=True, rounded=True,
+                                special_characters=True)
+graph = pydotplus.graph_from_dot_data(dot_data)
+img = Image(graph.create_png())
+
+bucks = {}
+bucks['hr'] = [-1, 6, 9, 12, 16, 18, 20, 24]
+bucks['mnth'] = [0, 6, 12]
+bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
+bucks['hum'] = [-1., 0.2, 0.8, 1]
+_input_X = input_train_sample[features]
+_categorical_input_X = _input_X[cat_feat]
+non_cat_input_X = _input_X[non_cat_feat]
+input_X = get_my_input(_input_X, cat_feat, non_cat_feat, bucks=bucks, buckets=True, drop_feat=False)
+
 xtr = scaler.fit_transform(input_X)
-_output_X = get_my_input(output_X, cat_feat, non_cat_feat)
+_output_X = get_my_input(output_X, cat_feat, non_cat_feat, bucks=bucks, buckets=True, drop_feat=False)
 xte = scaler.transform(_output_X)  # transform test data
 # Fit classifier
 forest.fit(xtr, input_Y)
@@ -238,4 +282,4 @@ pred = forest.predict(xte)
 my_sub = pd.read_csv('my_submission.csv')
 my_sub['Prediction'] = pred
 my_sub.Prediction = my_sub.Prediction.astype(int)
-my_sub.to_csv('sub_2.csv', index=False)
+my_sub.to_csv('sub_3.csv', index=False)

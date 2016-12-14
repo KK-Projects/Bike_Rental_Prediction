@@ -70,18 +70,35 @@ def cat_var_to_dummies(categorical_input_X):
     return df
 
 
-def get_my_input(_input_X, cat_feat, non_cat_feat):
+def get_my_input(_input_X, cat_feat, non_cat_feat, bucks={}, buckets=False, drop_feat=False):
     """
 
     :param _input_X:
     :param cat_feat:
     :param non_cat_feat:
+    :param bucks_feat:
+    :param bucks:
+    :param buckets:
     :return:
     """
     categorical_input_X = _input_X[cat_feat]
     non_cat_input_X = _input_X[non_cat_feat]
+
+    if buckets:
+        bucks_feat = bucks.keys()
+        for b in bucks_feat:
+            if b in cat_feat:
+                out = pd.cut(categorical_input_X[b], bins=bucks[b])
+            elif b in non_cat_feat:
+                out = pd.cut(non_cat_input_X[b], bins=bucks[b])
+            out = out.astype(str)
+            categorical_input_X[b + '_bucket'] = out
+            if drop_feat:
+                categorical_input_X = categorical_input_X.drop(b, 1)
+
     cat_input_X = cat_var_to_dummies(categorical_input_X)
     input_X = pd.concat([cat_input_X, non_cat_input_X], axis=1)
+
     return input_X
 
 
