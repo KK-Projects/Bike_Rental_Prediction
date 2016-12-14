@@ -152,3 +152,46 @@ def cross_validate(_input_X, _input_Y, classifier, nb_folds=10, non_cat_feat=['t
         pred[te] = classifier.predict(Xte).reshape(yte.size,1)
     return pred
 
+
+def cross_validate_with_grid(_input_X, _input_Y, classifier, nb_folds):
+    """ Perform a cross-validation and returns the predictions.
+    Use a scaler to scale the features to mean 0, standard deviation 1.
+
+    Parameters:
+    -----------
+    design_matrix: (n_samples, n_features) np.array
+        Design matrix for the experiment.
+    labels: (n_samples, ) np.array
+        Vector of labels.
+    classifier:  sklearn classifier object
+        Classifier instance; must have the following methods:
+        - fit(X, y) to train the classifier on the data X, y
+        - predict_proba(X) to apply the trained classifier to the data X and return probability estimates
+    cv_folds: sklearn cross-validation object
+        Cross-validation iterator.
+
+    Return:
+    -------
+    pred: (n_samples, ) np.array
+        Vectors of predictions (same order as labels).
+    """
+    cv_folds = StratifiedKFold(_input_Y, nb_folds, shuffle=True)
+    pred = np.zeros(_input_Y.shape)  # vector of 0 in which to store the predictions
+    for tr, te in cv_folds:
+        # Restrict data to train/test folds
+        Xtr = _input_X[tr, :]
+        ytr = _input_Y[tr]
+        Xte = _input_X[te, :]
+        # print Xtr.shape, ytr.shape, Xte.shape
+
+        # Scale data
+        scaler = preprocessing.StandardScaler()  # create scaler
+        Xtr = scaler.fit_transform(Xtr)  # fit the scaler to the training data and transform training data
+        Xte = scaler.transform(Xte)  # transform test data
+
+        # Fit classifier
+        classifier.fit(Xtr, ytr)
+
+        # Predict probabilities (of belonging to +1 class) on test data
+        pred[te] = classifier.predict(Xte)  # two-dimensional array
+    return pred
