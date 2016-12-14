@@ -198,7 +198,7 @@ knn_ms_errors = []
 knn_residuals = []
 knn_algorithm = ["auto"]  # ["ball_tree", "kd_tree", "brute", "auto"]
 knn_weights = ["uniform"]  # ["uniform", "distance"]
-knn_neighbors = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]
+knn_neighbors = [1, 3, 5, 7]
 # [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]
 for algorithm in knn_algorithm:
     for weight in knn_weights:
