@@ -116,9 +116,12 @@ features = cat_feat + non_cat_feat
 
 bucks = {}
 bucks['hr'] = [-1, 6, 9, 12, 16, 18, 20, 24]
-bucks['mnth'] = [0, 6, 12]
-bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
-bucks['hum'] = [-1., 0.2, 0.8, 1]
+bucks['mnth'] = [0, 3, 6, 12]
+#bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
+#bucks['hum'] = [-1., 0.2, 0.8, 1]
+bucks['atemp'] = [-1., 0.17, 0.3, 0.58, 0.61, 0.71, 1]
+bucks['hum'] = [-1., 0.15, 0.46, 0.58, 0.66, 0.74, 0.84, 0.91, 1]
+
 _input_X = input_train_sample[features]
 _categorical_input_X = _input_X[cat_feat]
 non_cat_input_X = _input_X[non_cat_feat]
