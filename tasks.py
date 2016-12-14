@@ -21,7 +21,7 @@ input_train_sample = pd.read_csv('train.csv')
 output_test_sample = pd.read_csv('test.csv')
 my_sub = pd.read_csv('my_submission.csv')
 
-cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit']
+cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit', 'yr']
 non_cat_feat = ['temp', 'atemp', 'hum', 'windspeed']
 var_Y = ['cnt']
 features = cat_feat + non_cat_feat
@@ -108,11 +108,6 @@ for x_feat in features_uniques.keys():
 nb_folds = 10
 
 # Random_Forest 3 Params to cross validate
-
-cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit']
-non_cat_feat = ['temp', 'atemp', 'hum', 'windspeed']
-var_Y = ['cnt']
-features = cat_feat + non_cat_feat
 
 bucks = {}
 bucks['hr'] = [-1, 6, 9, 12, 16, 18, 20, 24]
