@@ -17,11 +17,13 @@ pd.set_option('display.width', 250)
 
 
 input_train_sample = pd.read_csv('train.csv')
+input_train_sample["trimestre"] = input_train_sample.yr * 4 + input_train_sample.season
 
 output_test_sample = pd.read_csv('test.csv')
+output_test_sample["trimestre"] = output_test_sample.yr * 4 + output_test_sample.season
 my_sub = pd.read_csv('my_submission.csv')
 
-cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit', 'yr']
+cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit', 'yr', 'trimestre']
 non_cat_feat = ['temp', 'atemp', 'hum', 'windspeed']
 var_Y = ['cnt']
 features = cat_feat + non_cat_feat
