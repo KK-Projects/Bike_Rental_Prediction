@@ -54,7 +54,10 @@ def get_pca_infos(input_X):
 def plot_pca_pcs(input_X):
 
     e_values, pc_infos = get_pca_infos(input_X)
-    e_values.plot(kind='bar', title="EigenValues")
+    e_cum = e_values.cumsum()
+    ax = e_values.plot(kind='bar', title="EigenValues")
+    ax2 = ax.twinx()
+    ax2.plot(e_cum)
     plt.ylabel('% of information')
     plt.show()
 
