@@ -17,10 +17,10 @@ pd.set_option('display.width', 250)
 
 
 input_train_sample = pd.read_csv('train.csv')
-#input_train_sample["trimestre"] = input_train_sample.yr * 4 + input_train_sample.season
+input_train_sample["trimestre"] = input_train_sample.yr * 4 + input_train_sample.season
 
 output_test_sample = pd.read_csv('test.csv')
-#output_test_sample["trimestre"] = output_test_sample.yr * 4 + output_test_sample.season
+output_test_sample["trimestre"] = output_test_sample.yr * 4 + output_test_sample.season
 my_sub = pd.read_csv('my_submission.csv')
 
 cat_feat = ['season', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit', 'yr']#, 'trimestre']
@@ -137,7 +137,7 @@ svr_predictions = []
 svr_ms_errors = []
 svr_residuals = []
 svr_log_mse = []
-gammas = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, "auto"]
+gammas = [0.00001, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.07, "auto"]
 kernels = ["linear", "rbf", "poly", "sigmoid"]
 C_changing = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 2, 3, 5, 10, 12, 15, 20]
 for gam in gammas:
@@ -359,7 +359,10 @@ from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV
 linear = LinearRegression()
 ridge = RidgeCV(alphas=[1e-2, 0.1, 1.0, 10.0, 100.0])
 from sklearn import svm
-_svr = svm.SVR(C=1, kernel='rbf', degree=3, gamma=0.001)
+optimal_C = 22
+optimal_kernel =  'poly'
+optimal_gamma = 0.025
+_svr = svm.SVR(C=optimal_C, kernel=optimal_kernel, gamma=optimal_gamma)
 from sklearn import neighbors
 knn = neighbors.KNeighborsClassifier(n_neighbors=15, weights="uniform", algorithm="auto")
 
