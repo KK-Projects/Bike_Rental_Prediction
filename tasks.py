@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from utils import get_my_input, cat_var_to_dummies, cross_validate
-#from regression import lin_reg_
+from regression import lin_reg_, linear_reg
 from features_description import plot_vars, divise_in_classes
 from random_forest import rand_forest_reg
 from knearest import k_nearest_neighbors
@@ -118,17 +118,72 @@ for x_feat in features_uniques.keys():
 # # rbf: \exp(-\gamma |x-x'|^2). \gamma is specified by keyword gamma, must be greater than 0.
 # # sigmoid (\tanh(\gamma \langle x,x'\rangle + r)), where r is specified by coef0.
 nb_folds = 5
-
-# Random_Forest 3 Params to cross validate
-
 bucks = {}
 bucks['hr'] = [-1, 6, 9, 12, 16, 18, 20, 24]
 bucks['mnth'] = [0, 3, 6, 12]
-#bucks['atemp'] = [-1., 0.2, 0.58, 0.75, 1]
-#bucks['hum'] = [-1., 0.2, 0.8, 1]
 bucks['atemp'] = [-1., 0.17, 0.3, 0.58, 0.61, 0.71, 1]
 bucks['hum'] = [-1., 0.2, 0.46, 0.58, 0.66, 0.74, 0.84, 0.91, 1]
 bucks['windspeed'] = [-1., 0.3, 0.5, 1]
+
+_input_X = input_train_sample[features]
+_categorical_input_X = _input_X[cat_feat]
+non_cat_input_X = _input_X[non_cat_feat]
+
+input_X = get_my_input(_input_X, cat_feat, non_cat_feat, bucks=bucks, buckets=True, drop_feat=False)
+categorical_input_X = cat_var_to_dummies(_categorical_input_X)
+input_Y = input_train_sample[var_Y]
+
+svr_predictions = []
+svr_ms_errors = []
+svr_residuals = []
+svr_log_mse = []
+gammas = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, "auto"]
+kernels = ["linear", "rbf", "poly", "sigmoid"]
+C_changing = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 2, 3, 5, 10, 12, 15, 20]
+for gam in gammas:
+    for ker in kernels:
+        for c in C_changing:
+            print("Estimating SVR cross validation with "
+                  "{} as C, {} as kernel, {} gamma".format(c, ker, gam))
+            predictions, residuals, ms_error = svr(input_X, input_Y,
+                                                   nb_folds=nb_folds, C=c,
+                                                   kernel=ker, degree=3, gamma=gam)
+
+            svr_ms_errors.append(ms_error)
+            svr_residuals.append(residuals)
+            print('ms_error of fitting:{}'.format(ms_error))
+            svr_predictions.append(predictions)
+
+            _log_res = np.log(predictions + 1) - np.log(input_Y + 1)
+            log_mse = np.sqrt(np.mean(_log_res ** 2))
+            svr_log_mse.append(log_mse)
+            print('final RMSLE for optimal n_estimators for each season = {}'.format(log_mse))
+
+import matplotlib.pyplot as plt
+
+plt.plot(C_changing, svr_log_mse, 'b-')
+plt.title("Cross-validated score(RMSLE) for different values ofC")
+plt.xlabel('C')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of C.png')
+
+plt.plot(svr_log_mse, 'b-')
+plt.title("Cross-validated score(RMSLE) for different max features functions")
+plt.xlabel('Kernels (0 = Linear, 1 = rbf, 2 = poly, 3 = sigmoid)')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different Kernels.png')
+
+gammas[-1] = -1
+plt.plot(gammas, svr_log_mse, 'b-')
+plt.title("Cross-validated score(RMSLE) for different values of gamma")
+plt.xlabel('gamma (-1 = auto, i.e 1/n-features')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of gamma.png')
+
+# Random_Forest 3 Params to cross validate
 
 _input_X = input_train_sample[features]
 _categorical_input_X = _input_X[cat_feat]
@@ -142,7 +197,7 @@ rf_predictions = []
 rf_ms_errors = []
 rf_residuals = []
 rf_log_mse = []
-max_depths = [None, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+max_depths = [None, 1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 max_feats = [None, "sqrt"]#, "log2"]
 n_estimators = [1, 5, 10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500, 750, 950, 1050]
 for depth in max_depths:
@@ -182,18 +237,17 @@ plt.ylabel('rmsle')
 plt.show()
 savefig('Cross-validated score(RMSLE) for different values of Number of Trees.png')
 
-plt.plot(max_feats, rf_log_mse, 'b-')
+plt.plot(rf_log_mse, 'b-')
 plt.title("Cross-validated score(RMSLE) for different max features functions")
-plt.xlabel('number of trees')
+plt.xlabel('max_feat_function')
 plt.ylabel('rmsle')
 plt.show()
-savefig('Cross-validated score(RMSLE) for different values of Number of Trees.png')
+savefig('Cross-validated score(RMSLE) for different max features functions.png')
 
 
-plt.plot(n_estimators, rf_log_mse, 'b-')
-plt.axis([0, 6, 0, 800])
+plt.plot(max_depths , rf_log_mse, 'b-')
 plt.title("Cross-validated score(RMSLE) for different values of max depth")
-plt.xlabel('number of trees')
+plt.xlabel('max_depth')
 plt.ylabel('rmsle')
 plt.show()
 savefig('Cross-validated score(RMSLE) for different values of max depth.png')
@@ -273,11 +327,13 @@ classification, conf_matrix = svc(categorical_input_X, class_input_Y,
                                   gamma='auto')
 
 # Linear Regression
-reg, residuals, input_data = lin_reg_(input_X, input_Y, test_size=0.2, number_sets=10)
-res_output = pd.concat([input_data['Y_test'], residuals], axis=1)
-res_output.columns = [var_Y[0], 'residuals']
-plot_vars(res_output, var_Y[0], 'residuals')
 
+print("Estimating linear reggression cross validation ")
+predictions, residuals, ms_error = linear_reg(input_X, input_Y, nb_folds=nb_folds)
+print('ms_error of fitting:{}'.format(ms_error))
+_log_res = np.log(predictions + 1) - np.log(input_Y + 1)
+log_mse = np.sqrt(np.mean(_log_res ** 2))
+print('final RMSLE for optimal n_estimators for each season = {}'.format(log_mse))
 
 # Get Output Data for Kaggle
 

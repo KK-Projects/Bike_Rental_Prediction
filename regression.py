@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 
 from utils import subdivise_data
-
+from utils import cross_validate
 
 def fitting_reg(data_subdivised, set):
 
@@ -53,3 +53,16 @@ def lin_reg_(input_X, input_Y, test_size=0.2, number_sets=10):
     reg, coefficients, residuals, ms_error, r_squared = fitting_reg(data_subdivised, optimal_set)
 
     return reg, residuals, data_subdivised[optimal_set]
+
+
+def linear_reg(input_X, input_Y, nb_folds=10):
+
+    linear = LinearRegression()
+    predictions = cross_validate(input_X, input_Y, linear, nb_folds=nb_folds)
+    residuals = predictions - input_Y
+    ms_error = np.mean(residuals ** 2)
+
+    residuals = pd.DataFrame(residuals)
+    residuals.columns = ['residuals']
+
+    return predictions, residuals, ms_error
