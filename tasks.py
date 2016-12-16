@@ -279,6 +279,28 @@ for algorithm in knn_algorithm:
             knn_rmsle.append(rmsle)
             print('RMSLE of fitting:{}'.format(rmsle))
 
+plt.plot(knn_neighbors, knn_rmsle, 'b-')
+plt.title("Cross-validated score(RMSLE) for different values of Number of Neighbours")
+plt.xlabel('number of Neighbours')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of Number of Neighbours.png')
+
+plt.plot(knn_rmsle, 'ro')
+plt.title("Cross-validated score(RMSLE) for different weights functions")
+plt.xlabel('weights ( 0 : uniform, 1: distance)')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different weights functions.png')
+
+
+plt.plot(knn_rmsle, 'b-')
+plt.title("Cross-validated score(RMSLE) for different Algorithms")
+plt.xlabel('algorithms ( 0 : ball_tree, 1: kd_tree, 2: brute, 3: auto)')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different Algorithms.png')
+
 print('Min of RMSLE: {}'.format(np.min(knn_rmsle)))
 knn_min_index = np.argmin(knn_rmsle)
 knn_min_residuals = knn_residuals[knn_min_index]
@@ -332,7 +354,7 @@ linear = LinearRegression()
 ridge = RidgeCV(alphas=[1e-2, 0.1, 1.0, 10.0, 100.0])
 from sklearn import svm
 optimal_C = 22
-optimal_kernel =  'poly'
+optimal_kernel = 'poly'
 optimal_gamma = 0.025
 _svr = svm.SVR(C=optimal_C, kernel=optimal_kernel, gamma=optimal_gamma)
 from sklearn import neighbors
