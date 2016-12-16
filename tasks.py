@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from svm import svc, svr
 import matplotlib.pyplot as plt
 from datetime import datetime
-
+from regularized_lin_regression import ridge
 from pylab import savefig
 
 pd.set_option('display.width', 250)
@@ -310,6 +310,45 @@ knn_min_ms_error = knn_ms_errors[knn_min_index]
 knn_res_output = pd.concat([input_Y, knn_min_residuals], axis=1)
 knn_res_output.columns = [var_Y[0], 'residuals']
 plot_vars(knn_res_output, var_Y[0], 'residuals')
+
+
+# Ridge
+
+nb_folds = 5
+ridge_ms_errors = []
+ridge_residuals = []
+ridge_rmsle = []
+ridge_alpha = [0.0001,0.001,0.01,0.1,1,10,100]
+# [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]
+for a in ridge_alpha:
+    print("Estimating Ridge with alpha = {}".format(a))
+    predictions, residuals, ms_error, rmsle = ridge(input_X, input_Y, nb_folds=nb_folds, alpha=a)
+    ridge_ms_errors.append(ms_error)
+    ridge_residuals.append(residuals)
+    ridge_rmsle.append(rmsle)
+    print('RMSLE of fitting:{}'.format(rmsle))
+
+plt.plot(ridge_alpha, ridge_rmsle, 'b-')
+plt.title("Cross-validated score(RMSLE) for different values of alpha")
+plt.xlabel('alpha')
+plt.ylabel('rmsle')
+plt.show()
+savefig('Cross-validated score(RMSLE) for different values of alpha.png')
+
+print('Min of RMSLE: {}'.format(np.min(ridge_rmsle)))
+ridge_min_index = np.argmin(ridge_rmsle)
+ridge_min_residuals = ridge_residuals[ridge_min_index]
+
+ridge_min_ms_error = ridge_ms_errors[ridge_min_index]
+
+ridge_res_output = pd.concat([input_Y, ridge_min_residuals], axis=1)
+ridge_res_output.columns = [var_Y[0], 'residuals']
+plot_vars(ridge_res_output, var_Y[0], 'residuals')
+
+
+
+
+
 
 
 # Classification(input_train_sample, var_Y, categorical_input_X):

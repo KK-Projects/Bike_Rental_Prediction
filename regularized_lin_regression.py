@@ -5,6 +5,23 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 
 from utils import subdivise_data
+from utils import cross_validate
+
+
+def ridge(input_X, input_Y , nb_folds=10, alpha=1):
+
+    clf = linear_model.Ridge(alpha=alpha)
+    predictions = cross_validate(input_X, input_Y, clf, nb_folds=nb_folds)
+    residuals = predictions - input_Y
+    ms_error = np.mean(residuals ** 2)
+
+    residuals = pd.DataFrame(residuals)
+    residuals.columns = ['residuals']
+
+    _log_res = np.log(predictions + 1) - np.log(input_Y + 1)
+    rmsle = np.sqrt(np.mean(_log_res ** 2))
+
+    return predictions, residuals, ms_error, rmsle
 
 
 def fitting_regularized_lin_reg(data_subdivised, set, lasso_ridge="ridge"):
